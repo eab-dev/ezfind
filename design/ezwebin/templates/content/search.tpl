@@ -199,13 +199,16 @@
       <fieldset>
           <legend>{'Refine your search'|i18n( 'design/ezwebin/content/search' )}</legend>
 
-          {def $activeFacetsCount=0}
-          <ul id="active-facets-list">
+          {def $activeFacetsCount=0 $ul=false()}
           {foreach $defaultSearchFacets as $key => $defaultFacet}
               {if array_keys( $activeFacetParameters )|contains( concat( $defaultFacet['field'], ':', $defaultFacet['name']  ) )}
                   {def $facetData=$search_extras.facet_fields.$key}
 
                   {foreach $facetData.nameList as $key2 => $facetName}
+                      {if not($ul)}
+                          <ul id="active-facets-list">
+                          {def $ul=true()}
+                      {/if}
                       {if eq( $activeFacetParameters[concat( $defaultFacet['field'], ':', $defaultFacet['name'] )], $facetName )}
                           {set $activeFacetsCount=sum( $key, 1 )}
                           {def $suffix=$uriSuffix|explode( concat( '&filter[]=', $facetData.queryLimit[$key2] ) )|implode( '' )|explode( concat( '&activeFacets[', $defaultFacet['field'], ':', $defaultFacet['name'], ']=', $facetName ) )|implode( '' )}
@@ -220,6 +223,10 @@
 
           {* handle date filter here, manually for now. Should be a facet later on *}
           {if gt( $dateFilter, 0 )}
+              {if not($ul)}
+                 <ul id="active-facets-list">
+                 {def $ul=true()}
+              {/if}
               <li>
                  {set $activeFacetsCount=$activeFacetsCount|inc}
                  {def $suffix=$uriSuffix|explode( concat( '&dateFilter=', $dateFilter ) )|implode( '' )}
@@ -232,17 +239,22 @@
                   <a href={$baseURI|ezurl}>[x]</a> <em>{'Clear all'|i18n( 'extension/ezfind/facets' )}</em>
               </li>
           {/if}
-          </ul>
+          {if $ul}</ul>{/if}
+          {undef $ul}
 
           <ul id="facet-list">
           {foreach $defaultSearchFacets as $key => $defaultFacet}
               {if array_keys( $activeFacetParameters )|contains( concat( $defaultFacet['field'], ':', $defaultFacet['name']  ) )|not}
               <li>
-                {def $facetData=$search_extras.facet_fields.$key}
+                {def $facetData=$search_extras.facet_fields.$key $ul=false()}
                   <span {*style="background-color: #F2F1ED"*}><strong>{$defaultFacet['name']}</strong></span>
                   <ul>
                     {foreach $facetData.nameList as $key2 => $facetName}
                         {if ne( $key2, '' )}
+                        {if not($ul)}
+						<ul>
+						{def $ul=true()}
+                        {/if}
                         <li>
                             <a href={concat(
                                 $baseURI, '&filter[]=', $facetData.queryLimit[$key2]|rawurlencode,
@@ -253,8 +265,8 @@
                         </li>
                         {/if}
                     {/foreach}
-                  </ul>
-                  {undef $facetData}
+                  {if $ul}</ul>{/if}
+                  {undef $facetData $ul}
               </li>
               {/if}
           {/foreach}
